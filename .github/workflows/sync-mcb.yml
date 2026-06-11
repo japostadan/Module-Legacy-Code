@@ -1,0 +1,29 @@
+name: Sync to MCB
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout MCB
+        uses: actions/checkout@v4
+        with:
+          repository: japostadan/Migracode
+          token: ${{ secrets.MCB_PAT }}
+
+      - name: Update submodule pointer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          CURRENT=$(git ls-tree HEAD Module-Legacy-Code | awk '{print $3}')
+          NEW=$(git ls-remote https://github.com/japostadan/Module-Legacy-Code.git refs/heads/main | cut -f1)
+          if [ "$CURRENT" = "$NEW" ]; then
+            echo "Already up to date."
+            exit 0
+          fi
+          git update-index --cacheinfo 160000,$NEW,Module-Legacy-Code
+          git commit -m "chore: sync Module-Legacy-Code to ${NEW:0:7}"
+          git push || (git pull --rebase && git push)
