@@ -13,6 +13,7 @@ jobs:
         with:
           repository: japostadan/Migracode
           token: ${{ secrets.MCB_PAT }}
+          persist-credentials: true
 
       - name: Update submodule pointer
         env:
@@ -20,7 +21,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${MCB_PAT}@github.com/japostadan/Migracode.git"
+          git config http.https://github.com/.extraheader "AUTHORIZATION: token ${MCB_PAT}"
           CURRENT=$(git ls-tree HEAD Module-Legacy-Code | awk '{print $3}')
           NEW=$(git ls-remote https://github.com/japostadan/Module-Legacy-Code.git refs/heads/main | cut -f1)
           if [ "$CURRENT" = "$NEW" ]; then
@@ -29,4 +30,4 @@ jobs:
           fi
           git update-index --cacheinfo 160000,$NEW,Module-Legacy-Code
           git commit -m "chore: sync Module-Legacy-Code to ${NEW:0:7}"
-          git push || (git pull --rebase && git push)
+          git push origin main
