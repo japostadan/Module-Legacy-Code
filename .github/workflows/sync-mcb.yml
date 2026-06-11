@@ -15,9 +15,12 @@ jobs:
           token: ${{ secrets.MCB_PAT }}
 
       - name: Update submodule pointer
+        env:
+          MCB_PAT: ${{ secrets.MCB_PAT }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${MCB_PAT}@github.com/japostadan/Migracode.git"
           CURRENT=$(git ls-tree HEAD Module-Legacy-Code | awk '{print $3}')
           NEW=$(git ls-remote https://github.com/japostadan/Module-Legacy-Code.git refs/heads/main | cut -f1)
           if [ "$CURRENT" = "$NEW" ]; then
