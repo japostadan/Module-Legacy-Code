@@ -5,29 +5,13 @@ on:
     branches: [main]
 
 jobs:
-  sync:
+  dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout MCB
-        uses: actions/checkout@v4
-        with:
-          repository: japostadan/Migracode
-          token: ${{ secrets.MCB_PAT }}
-          persist-credentials: true
-
-      - name: Update submodule pointer
-        env:
-          MCB_PAT: ${{ secrets.MCB_PAT }}
+      - name: Notify MCB superproject
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config http.https://github.com/.extraheader "AUTHORIZATION: token ${MCB_PAT}"
-          CURRENT=$(git ls-tree HEAD Module-Legacy-Code | awk '{print $3}')
-          NEW=$(git ls-remote https://github.com/japostadan/Module-Legacy-Code.git refs/heads/main | cut -f1)
-          if [ "$CURRENT" = "$NEW" ]; then
-            echo "Already up to date."
-            exit 0
-          fi
-          git update-index --cacheinfo 160000,$NEW,Module-Legacy-Code
-          git commit -m "chore: sync Module-Legacy-Code to ${NEW:0:7}"
-          git push origin main
+          curl -fsS -X POST \
+            -H "Authorization: token ${{ secrets.MCB_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/japostadan/Migracode/dispatches \
+            -d "{\"event_type\":\"submodule-updated\",\"client_payload\":{\"module\":\"${{ github.event.repository.name }}\"}}"
