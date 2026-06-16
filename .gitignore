@@ -6,3 +6,4 @@ backend/.venv
 db/pg_data/
 note.md
 compose-runbook.md
+.scratch/
