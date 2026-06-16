@@ -1,1 +1,8 @@
 .DS_Store
+
+# Local dev / containerization artifacts
+backend/.env
+backend/.venv
+db/pg_data/
+note.md
+compose-runbook.md

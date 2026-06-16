@@ -1,0 +1,8 @@
+node_modules
+tests
+playwright.config.js
+package.json
+package-lock.json
+*.md
+Dockerfile
+.dockerignore
