@@ -3,6 +3,7 @@ import {loginAsJustSomeGuy} from "./test-utils.mjs";
 
 // Tests for issue #8: Unfollow feature.
 
+test.describe.configure({mode: "serial"});
 test.describe("Unfollow (issue #8)", () => {
   test.beforeEach(async ({request}) => {
     // Reset: ensure JustSomeGuy is not following sample before each test.

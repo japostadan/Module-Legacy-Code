@@ -39,7 +39,7 @@ test.describe("Home View", () => {
     await postBloom(page, "My first bloom!");
 
     // Then I see the bloom in the timeline
-    await expect(page.locator("[data-bloom] [data-content]").first()).toContainText("My first bloom!");
+    await expect(page.locator("[data-bloom] [data-content]").filter({hasText: "My first bloom!"}).first()).toBeVisible();
   });
 
   test("hides components after logout", async ({page}) => {
@@ -60,14 +60,14 @@ test.describe("Home View", () => {
   });
 
   test("shows own and followed user's posts in home timeline", async ({page}) => {
-    // Given I am logged in as sample who already follows JustSomeGuy
+    // Given I am logged in as sample who already follows Swiz (from seed)
     await loginAsSample(page);
 
     await waitForLocatorToHaveMatches(page, TIMELINE_USERNAMES_ELEMENTS_LOCATOR);
     const postUsernames = await page.locator(TIMELINE_USERNAMES_ELEMENTS_LOCATOR).allInnerTexts();
     // Then I see my own posts in my timeline
     expect(postUsernames).toContain("sample");
-    // And I see my a followed user's posts in my timeline
-    expect(postUsernames).toContain("JustSomeGuy");
+    // And I see a followed user's posts in my timeline
+    expect(postUsernames).toContain("Swiz");
   });
 });

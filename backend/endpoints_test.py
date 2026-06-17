@@ -110,5 +110,62 @@ class TestUnfollow(unittest.TestCase):
         self.assertTrue(data["success"])
 
 
+class TestRebloom(unittest.TestCase):
+    # sample reblooms a bloom originally posted by TechInfluencer (from seed).
+    # JustSomeGuy is used as the original poster for controlled tests.
+
+    @classmethod
+    def setUpClass(cls):
+        status, data = _post("/login", {"username": "sample", "password": "sosecret"})
+        if status != 200:
+            raise RuntimeError(f"Login failed ({status}): {data}")
+        cls.sample_auth = {"Authorization": f"Bearer {data['token']}"}
+
+        status, data = _post("/login", {"username": "JustSomeGuy", "password": "mysterious"})
+        if status != 200:
+            raise RuntimeError(f"Login failed ({status}): {data}")
+        cls.jsg_auth = {"Authorization": f"Bearer {data['token']}"}
+
+        # JustSomeGuy posts a bloom we can rebloom.
+        status, data = _post("/bloom", {"content": "Rebloom me!"}, cls.jsg_auth)
+        if status != 200:
+            raise RuntimeError(f"Could not post bloom ({status}): {data}")
+        blooms_resp = _get("/blooms/JustSomeGuy")
+        cls.original_bloom_id = blooms_resp[1][0]["id"]
+
+    def test_rebloom_returns_success(self):
+        status, data = _post(f"/rebloom/{self.original_bloom_id}", headers=self.sample_auth)
+        self.assertEqual(status, 200)
+        self.assertTrue(data["success"])
+
+    def test_rebloom_appears_in_rebloomer_profile(self):
+        _post(f"/rebloom/{self.original_bloom_id}", headers=self.sample_auth)
+        _, profile = _get("/profile/sample", self.sample_auth)
+        rebloom_ids = {b["rebloom_of"] for b in profile["recent_blooms"] if b.get("rebloom_of")}
+        self.assertIn(self.original_bloom_id, rebloom_ids)
+
+    def test_rebloom_carries_original_sender(self):
+        _post(f"/rebloom/{self.original_bloom_id}", headers=self.sample_auth)
+        _, profile = _get("/profile/sample", self.sample_auth)
+        reblooms = [b for b in profile["recent_blooms"] if b.get("rebloom_of") == self.original_bloom_id]
+        self.assertTrue(any(rb["original_sender"] == "JustSomeGuy" for rb in reblooms))
+
+    def test_rebloom_of_rebloom_is_rejected(self):
+        _post(f"/rebloom/{self.original_bloom_id}", headers=self.sample_auth)
+        _, profile = _get("/profile/sample", self.sample_auth)
+        rebloom = next(b for b in profile["recent_blooms"] if b.get("rebloom_of") == self.original_bloom_id)
+        status, _ = _post(f"/rebloom/{rebloom['id']}", headers=self.sample_auth)
+        self.assertEqual(status, 400)
+
+    def test_rebloom_count_on_original(self):
+        _post(f"/rebloom/{self.original_bloom_id}", headers=self.sample_auth)
+        _, bloom = _get(f"/bloom/{self.original_bloom_id}")
+        self.assertGreaterEqual(bloom["rebloom_count"], 1)
+
+    def test_rebloom_nonexistent_bloom_returns_404(self):
+        status, _ = _post("/rebloom/999999999999", headers=self.sample_auth)
+        self.assertEqual(status, 404)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -259,6 +259,20 @@ async function followUser(username) {
   }
 }
 
+async function rebloom(bloomId) {
+  try {
+    const data = await _apiRequest(`/rebloom/${bloomId}`, {method: "POST"});
+
+    if (data.success) {
+      await Promise.all([getBlooms(), getProfile(state.currentUser)]);
+    }
+
+    return data;
+  } catch (error) {
+    return {success: false};
+  }
+}
+
 async function unfollowUser(username) {
   try {
     const data = await _apiRequest(`/unfollow/${username}`, {
@@ -298,6 +312,9 @@ const apiService = {
   followUser,
   unfollowUser,
   getWhoToFollow,
+
+  // Bloom interactions
+  rebloom,
 };
 
 export {apiService};
