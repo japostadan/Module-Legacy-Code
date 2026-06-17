@@ -1,5 +1,6 @@
 from typing import Dict, Union
 from data import blooms
+from data.blooms import add_rebloom
 from data.follows import follow, unfollow, get_followed_usernames, get_inverse_followed_usernames
 from data.users import (
     UserRegistrationError,
@@ -160,6 +161,25 @@ def do_unfollow(username):
             ({"success": False, "message": f"User {username} not found"}, 404)
         )
     unfollow(current_user, unfollow_user)
+    return jsonify({"success": True})
+
+
+@jwt_required()
+def do_rebloom(bloom_id_str):
+    try:
+        bloom_id = int(bloom_id_str)
+    except ValueError:
+        return make_response(({"success": False, "message": "Invalid bloom id"}, 400))
+
+    user = get_current_user()
+    try:
+        result = add_rebloom(sender=user, bloom_id=bloom_id)
+    except ValueError as e:
+        return make_response(({"success": False, "message": str(e)}, 400))
+
+    if result is None:
+        return make_response(({"success": False, "message": "Bloom not found"}, 404))
+
     return jsonify({"success": True})
 
 
